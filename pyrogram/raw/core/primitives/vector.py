@@ -22,6 +22,7 @@ from typing import cast, Union, Any
 from .int import Int, Long
 from ..list import List
 from ..tl_object import TLObject
+from ...serialization_error import DeserializationError
 
 
 class Vector(bytes, TLObject):
@@ -41,7 +42,10 @@ class Vector(bytes, TLObject):
 
     @classmethod
     def read_strict(cls, data: BytesIO, t: Any = None, *args: Any) -> List:
-        assert Int.read(data, False) == cls.ID  # TODO: replace with exception
+        got_id = Int.read(data, False)
+        if got_id != cls.ID:
+            raise DeserializationError("Vector", "", "Vector", got_id)
+        # TODO: add check for vector elements type
         return cls.read(data, t)
 
     @classmethod
