@@ -40,6 +40,11 @@ class Vector(bytes, TLObject):
         return TLObject.read(b)
 
     @classmethod
+    def read_strict(cls, data: BytesIO, t: Any = None, *args: Any) -> List:
+        assert Int.read(data, False) == cls.ID  # TODO: replace with exception
+        return cls.read(data, t)
+
+    @classmethod
     def read(cls, data: BytesIO, t: Any = None, *args: Any) -> List:
         count = Int.read(data)
         left = len(data.read())

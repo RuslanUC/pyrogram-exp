@@ -224,7 +224,7 @@ class Client(Methods):
         no_updates: bool = None,
         takeout: bool = None,
         sleep_threshold: int = Session.SLEEP_THRESHOLD,
-        hide_password: bool = False,
+        hide_password: bool = True,
         max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS
     ):
         super().__init__()

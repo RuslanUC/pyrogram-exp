@@ -22,7 +22,7 @@ import re
 import shutil
 from functools import partial
 from pathlib import Path
-from typing import NamedTuple, List, Tuple
+from typing import NamedTuple, List, Tuple, Dict
 
 # from autoflake import fix_code
 # from black import format_str, FileMode
@@ -225,7 +225,7 @@ def start(format: bool = False):
 
     section = None
     layer = None
-    combinators = []
+    combinators: Dict[str, Combinator] = {}
 
     for line in schema:
         # Check for section changer lines
@@ -256,12 +256,14 @@ def start(format: bool = False):
             # Pingu!
             has_flags = not not FLAGS_RE_3.findall(line)
 
-            args = ARGS_RE.findall(line)
+            args: List[Tuple[str, str]] = ARGS_RE.findall(line)
 
             # Fix arg name being "self" (reserved python keyword)
             for i, item in enumerate(args):
                 if item[0] == "self":
                     args[i] = ("is_self", item[1])
+                elif item[0] in {"from"}:
+                    args[i] = (f"{item[0]}_", item[1])
 
             combinator = Combinator(
                 section=section,
@@ -276,9 +278,9 @@ def start(format: bool = False):
                 type=type
             )
 
-            combinators.append(combinator)
+            combinators[qualname] = combinator
 
-    for c in combinators:
+    for c in combinators.values():
         qualtype = c.qualtype
 
         if qualtype.startswith("Vector"):
@@ -364,7 +366,7 @@ def start(format: bool = False):
                 )
             )
 
-    for c in combinators:
+    for c in combinators.values():
         sorted_args = sort_args(c.args)
 
         arguments = (
@@ -500,16 +502,41 @@ def start(format: bool = False):
                     )
 
                     read_types += "\n        "
-                    read_types += "{} = TLObject.read(b{}) if flags{} & (1 << {}) else []\n        ".format(
+                    read_types += "{} = Vector.read_strict(b{}) if flags{} & (1 << {}) else []\n        ".format(
                         arg_name, f", {sub_type.title()}" if sub_type in CORE_TYPES else "", number, index
                     )
                 else:
+                    clear_arg_type = arg_type.split("?")[1]
+                    if arg_type in {"Object", "!X"}:
+                        obj_constuctors = []
+                    else:
+                        obj_constuctors = [combinators.get(qn) for qn in types_to_constructors[clear_arg_type]]
+
                     write_types += "\n        "
                     write_types += f"if self.{arg_name} is not None:\n            "
                     write_types += f"b.write(self.{arg_name}.write())\n        "
 
                     read_types += "\n        "
-                    read_types += f"{arg_name} = TLObject.read(b) if flags{number} & (1 << {index}) else None\n        "
+                    read_types += f"if flags{number} & (1 << {index}):\n            "
+
+                    obj_type_name = "TLObject"
+                    if obj_constuctors:
+                        obj_type_name = f"{arg_name}_{obj_type_name}"
+                        constr_id_name = f"{arg_name}_constructor"
+
+                        constructor_ids = [f"raw.types.{obj_c.qualname}.ID: raw.types.{obj_c.qualname}" for obj_c in obj_constuctors]
+                        read_types += f"{constr_id_name} = Int.read(b, False)\n            "
+                        read_types += f"{obj_type_name}: type[TLObject]"
+                        read_types += " = {\n                "
+                        read_types += ", ".join(constructor_ids)
+                        read_types += "\n            }"
+                        read_types += f".get({constr_id_name}, None)\n            "
+                        read_types += f"if {obj_type_name} is None:\n                "
+                        read_types += f"raise raw.DeserializationError(\"{c.name}\", \"{arg_name}\", \"{clear_arg_type}\", {constr_id_name})\n            "
+
+                    read_types += f"{arg_name} = {obj_type_name}.read(b)\n        "
+                    read_types += "else:\n            "
+                    read_types += f"{arg_name} = None\n        "
             else:
                 if arg_type in CORE_TYPES:
                     write_types += "\n        "
@@ -526,15 +553,35 @@ def start(format: bool = False):
                     )
 
                     read_types += "\n        "
-                    read_types += "{} = TLObject.read(b{})\n        ".format(
+                    read_types += "{} = Vector.read_strict(b{})\n        ".format(
                         arg_name, f", {sub_type.title()}" if sub_type in CORE_TYPES else ""
                     )
                 else:
+                    if arg_type in {"Object", "!X"}:
+                        obj_constuctors = []
+                    else:
+                        obj_constuctors = [combinators.get(qn) for qn in types_to_constructors[arg_type]]
+
                     write_types += "\n        "
                     write_types += f"b.write(self.{arg_name}.write())\n        "
 
                     read_types += "\n        "
-                    read_types += f"{arg_name} = TLObject.read(b)\n        "
+                    obj_type_name = "TLObject"
+                    if obj_constuctors:
+                        obj_type_name = f"{arg_name}_{obj_type_name}"
+                        constr_id_name = f"{arg_name}_constructor"
+
+                        constructor_ids = [f"raw.types.{obj_c.qualname}.ID: raw.types.{obj_c.qualname}" for obj_c in obj_constuctors]
+                        read_types += f"{constr_id_name} = Int.read(b, False)\n        "
+                        read_types += f"{obj_type_name}: type[TLObject]"
+                        read_types += " = {\n            "
+                        read_types += ", ".join(constructor_ids)
+                        read_types += "\n        }"
+                        read_types += f".get({constr_id_name}, None)\n        "
+                        read_types += f"if {obj_type_name} is None:\n            "
+                        read_types += f"raise raw.DeserializationError(\"{c.name}\", \"{arg_name}\", \"{arg_type}\", {constr_id_name})\n        "
+
+                    read_types += f"{arg_name} = {obj_type_name}.read(b)\n        "
 
         slots = ", ".join([f'"{i[0]}"' for i in sorted_args])
         return_arguments = ", ".join([f"{i[0]}={i[0]}" for i in sorted_args])
@@ -629,7 +676,7 @@ def start(format: bool = False):
         f.write(f"layer = {layer}\n\n")
         f.write("objects = {")
 
-        for c in combinators:
+        for c in combinators.values():
             f.write(f'\n    {c.id}: "pyrogram.raw.{c.section}.{c.qualname}",')
 
         f.write('\n    0xbc799737: "pyrogram.raw.core.BoolFalse",')
