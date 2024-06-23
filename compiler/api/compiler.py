@@ -60,6 +60,21 @@ except ImportError:
     LazyImporter = None
 """.strip()
 
+LAZY_IMPORT_DICT = """
+from importlib import import_module
+
+
+class LazyLoadDict(dict):
+    def __getitem__(self, item: int) -> type:
+        mod = dict.__getitem__(self, item)
+        if isinstance(mod, str):
+            path, name = mod.rsplit(".", 1)
+            self[item] = mod = getattr(import_module(path), name)
+            return mod
+        else:
+            return mod
+""".strip()
+
 # noinspection PyShadowingBuiltins
 open = partial(open, encoding="utf-8")
 
@@ -695,10 +710,11 @@ def start(format: bool = False):
                 f.write("    )\n")
 
     with open(DESTINATION_PATH / "all.py", "w", encoding="utf-8") as f:
-        f.write(notice + "\n\n")
-        f.write(WARNING + "\n\n")
+        f.write(f"{notice}\n\n")
+        f.write(f"{WARNING}\n\n")
+        f.write(f"{LAZY_IMPORT_DICT}\n\n")
         f.write(f"layer = {layer}\n\n")
-        f.write("objects = {")
+        f.write("objects = LazyLoadDict({")
 
         for c in combinators.values():
             f.write(f'\n    {c.id}: "pyrogram.raw.{c.section}.{c.qualname}",')
@@ -712,7 +728,7 @@ def start(format: bool = False):
         f.write('\n    0x3072cfa1: "pyrogram.raw.core.GzipPacked",')
         f.write('\n    0x5bb8e511: "pyrogram.raw.core.Message",')
 
-        f.write("\n}\n")
+        f.write("\n})\n")
 
 
 if "__main__" == __name__:

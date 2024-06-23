@@ -16,21 +16,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from importlib import import_module
-
 from . import types, functions, base, core
 from .all import objects
 from .serialization_error import DeserializationError
-
-
-class LazyLoadDict(dict):
-    def __getitem__(self, item: int) -> type:
-        mod = dict.__getitem__(self, item)
-        if isinstance(mod, str):
-            path, name = mod.rsplit(".", 1)
-            self[item] = getattr(import_module(path), name)
-        else:
-            return mod
-
-
-objects = LazyLoadDict(objects)
