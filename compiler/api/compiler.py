@@ -50,6 +50,16 @@ WARNING = """
 # # # # # # # # # # # # # # # # # # # # # # # #
 """.strip()
 
+__INIT__IMPORTS = """
+import sys
+from typing import TYPE_CHECKING
+
+try:
+    from lazy_imports import LazyImporter
+except ImportError:
+    LazyImporter = None
+""".strip()
+
 # noinspection PyShadowingBuiltins
 open = partial(open, encoding="utf-8")
 
@@ -638,37 +648,51 @@ def start(format: bool = False):
             if not namespace:
                 f.write(f"from . import {', '.join(filter(bool, namespaces_to_types))}")
 
-    for namespace, types in namespaces_to_constructors.items():
-        with open(DESTINATION_PATH / "types" / namespace / "__init__.py", "w") as f:
-            f.write(f"{notice}\n\n")
-            f.write(f"{WARNING}\n\n")
+    for section, namespaces_to in (("types", namespaces_to_constructors), ("functions", namespaces_to_functions)):
+        for namespace, types in namespaces_to.items():
+            with open(DESTINATION_PATH / section / namespace / "__init__.py", "w") as f:
+                f.write(f"{notice}\n\n")
+                f.write(f"{__INIT__IMPORTS}\n\n")
+                f.write(f"{WARNING}\n\n")
+                f.write("if TYPE_CHECKING or LazyImporter is None:\n")
 
-            for t in types:
-                module = t
+                nss = list(filter(bool, namespaces_to))
+                if not namespace:
+                    f.write(f"    from . import {', '.join(nss)}\n")
 
-                if module == "Updates":
-                    module = "UpdatesT"
+                for t in types:
+                    module = t
 
-                f.write(f"from .{snake(module)} import {t}\n")
+                    if module == "Updates":
+                        module = "UpdatesT"
 
-            if not namespace:
-                f.write(f"from . import {', '.join(filter(bool, namespaces_to_constructors))}\n")
+                    f.write(f"    from .{snake(module)} import {t}\n")
 
-    for namespace, types in namespaces_to_functions.items():
-        with open(DESTINATION_PATH / "functions" / namespace / "__init__.py", "w") as f:
-            f.write(f"{notice}\n\n")
-            f.write(f"{WARNING}\n\n")
+                f.write("else:\n")
+                f.write("    _import_structure = {\n")
 
-            for t in types:
-                module = t
+                for t in types:
+                    module = t
 
-                if module == "Updates":
-                    module = "UpdatesT"
+                    if module == "Updates":
+                        module = "UpdatesT"
 
-                f.write(f"from .{snake(module)} import {t}\n")
+                    f.write(f"        \"{snake(module)}\": [\"{t}\"],\n")
 
-            if not namespace:
-                f.write(f"from . import {', '.join(filter(bool, namespaces_to_functions))}")
+                f.write("    }\n")
+                extra_objects = ""
+                if not namespace:
+                    f.write(f"    from . import {', '.join(nss)}\n")
+                    extra_objects = ",\n            ".join([f"\"{ns}\": {ns}" for ns in nss])
+
+                f.write("    sys.modules[__name__] = LazyImporter(\n")
+                f.write("        __name__,\n")
+                f.write("        globals()[\"__file__\"],\n")
+                f.write("        _import_structure,\n")
+                f.write("        extra_objects={\n")
+                f.write(f"            {extra_objects}\n")
+                f.write("        }\n")
+                f.write("    )\n")
 
     with open(DESTINATION_PATH / "all.py", "w", encoding="utf-8") as f:
         f.write(notice + "\n\n")

@@ -22,6 +22,15 @@ from . import types, functions, base, core
 from .all import objects
 from .serialization_error import DeserializationError
 
-for k, v in objects.items():
-    path, name = v.rsplit(".", 1)
-    objects[k] = getattr(import_module(path), name)
+
+class LazyLoadDict(dict):
+    def __getitem__(self, item: int) -> type:
+        mod = dict.__getitem__(self, item)
+        if isinstance(mod, str):
+            path, name = mod.rsplit(".", 1)
+            self[item] = getattr(import_module(path), name)
+        else:
+            return mod
+
+
+objects = LazyLoadDict(objects)

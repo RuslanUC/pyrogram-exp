@@ -84,5 +84,9 @@ setup(
     },
     packages=find_packages(exclude=["compiler*", "tests*"]),
     zip_safe=False,
-    install_requires=requires
+    install_requires=requires,
+    extras_require={
+        "lazy-imports": ["lazy-imports ~= 0.3.1"],
+        "tgcrypto": ["tgcrypto"],
+    }
 )
