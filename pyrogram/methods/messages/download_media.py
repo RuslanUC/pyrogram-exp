@@ -19,7 +19,8 @@
 import asyncio
 import os
 from datetime import datetime
-from typing import Union, Optional, Callable, BinaryIO
+from io import BytesIO
+from typing import Union, Callable, BinaryIO, overload, Literal
 
 import pyrogram
 from pyrogram import types
@@ -29,6 +30,42 @@ DEFAULT_DOWNLOAD_DIR = "downloads/"
 
 
 class DownloadMedia:
+    @overload
+    async def download_media(
+            self: "pyrogram.Client",
+            message: Union["types.Message", str],
+            file_name: str = DEFAULT_DOWNLOAD_DIR,
+            in_memory: Literal[False] = False,
+            block: bool = True,
+            progress: Callable = None,
+            progress_args: tuple = ()
+    ) -> str | None:
+        ...
+
+    @overload
+    async def download_media(
+            self: "pyrogram.Client",
+            message: Union["types.Message", str],
+            file_name: str = DEFAULT_DOWNLOAD_DIR,
+            in_memory: Literal[True] = False,
+            block: bool = True,
+            progress: Callable = None,
+            progress_args: tuple = ()
+    ) -> BytesIO | None:
+        ...
+
+    @overload
+    async def download_media(
+            self: "pyrogram.Client",
+            message: Union["types.Message", str],
+            file_name: str = DEFAULT_DOWNLOAD_DIR,
+            in_memory: bool = False,
+            block: bool = True,
+            progress: Callable = None,
+            progress_args: tuple = ()
+    ) -> str | BytesIO | None:
+        ...
+
     async def download_media(
         self: "pyrogram.Client",
         message: Union["types.Message", str],
@@ -37,7 +74,7 @@ class DownloadMedia:
         block: bool = True,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> Optional[Union[str, BinaryIO]]:
+    ) -> str | BytesIO | None:
         """Download the media from a message.
 
         .. include:: /_includes/usable-by/users-bots.rst

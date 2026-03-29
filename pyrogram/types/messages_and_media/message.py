@@ -19,7 +19,8 @@
 import logging
 from datetime import datetime
 from functools import partial
-from typing import List, Match, Union, BinaryIO, Optional, Callable
+from io import BytesIO
+from typing import List, Match, Union, BinaryIO, Optional, Callable, overload, Literal
 
 import pyrogram
 from pyrogram import raw, enums
@@ -3409,6 +3410,28 @@ class Message(Object, Update):
             message_id=self.id
         )
 
+    @overload
+    async def download(
+            self,
+            file_name: str = "",
+            in_memory: Literal[False] = False,
+            block: bool = True,
+            progress: Callable = None,
+            progress_args: tuple = ()
+    ) -> str:
+        ...
+
+    @overload
+    async def download(
+            self,
+            file_name: str = "",
+            in_memory: Literal[True] = False,
+            block: bool = True,
+            progress: Callable = None,
+            progress_args: tuple = ()
+    ) -> BytesIO:
+        ...
+
     async def download(
         self,
         file_name: str = "",
@@ -3416,7 +3439,7 @@ class Message(Object, Update):
         block: bool = True,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> str:
+    ) -> BytesIO:
         """Bound method *download* of :obj:`~pyrogram.types.Message`.
 
         Use as a shortcut for:
