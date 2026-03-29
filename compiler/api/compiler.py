@@ -141,7 +141,7 @@ def get_type_hint(type: str) -> str:
         return f"{type} | None = None" if is_flag else type
     else:
         ns, name = type.split(".") if "." in type else ("", type)
-        type = f'"raw.base.' + ".".join([ns, name]).strip(".") + '"'
+        type = f"raw.base.{'.'.join([ns, name]).strip('.')}"
 
         return f'{type}{" = None" if is_flag else ""}'
 
