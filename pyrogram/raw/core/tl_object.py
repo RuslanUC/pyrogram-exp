@@ -18,7 +18,7 @@
 
 from io import BytesIO
 from json import dumps
-from typing import cast, List, Any, Union, Dict
+from typing import cast, List, Any, Union, Dict, TypeVar, Generic
 
 from ..all import objects
 
@@ -80,3 +80,10 @@ class TLObject:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         pass
+
+
+TLObjectT = TypeVar("TLObjectT", bound=TLObject)
+
+
+class TLRequest(TLObject, Generic[TLObjectT]):
+    ...

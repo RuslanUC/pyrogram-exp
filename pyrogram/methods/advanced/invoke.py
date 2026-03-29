@@ -20,7 +20,8 @@ import logging
 
 import pyrogram
 from pyrogram import raw
-from pyrogram.raw.core import TLObject
+from pyrogram.raw.core import TLObject, TLRequest
+from pyrogram.raw.core.tl_object import TLObjectT
 from pyrogram.session import Session
 
 log = logging.getLogger(__name__)
@@ -29,11 +30,11 @@ log = logging.getLogger(__name__)
 class Invoke:
     async def invoke(
         self: "pyrogram.Client",
-        query: TLObject,
+        query: TLRequest[TLObjectT],
         retries: int = Session.MAX_RETRIES,
         timeout: float = Session.WAIT_TIMEOUT,
         sleep_threshold: float = None
-    ):
+    ) -> TLObjectT:
         """Invoke raw Telegram functions.
 
         This method makes it possible to manually call every single Telegram API method in a low-level manner.

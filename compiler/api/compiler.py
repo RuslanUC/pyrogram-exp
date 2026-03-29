@@ -41,6 +41,18 @@ FLAGS_RE_3 = re.compile(r"flags(\d?):#")
 INT_RE = re.compile(r"int(\d+)")
 
 CORE_TYPES = ["int", "long", "int128", "int256", "double", "bytes", "string", "Bool", "true"]
+PRIMITIVE_TYPES = {
+    "int": "int",
+    "long": "int",
+    "int128": "int",
+    "int256": "int",
+    "double": "float",
+    "bytes": "bytes",
+    "string": "str",
+    "bool": "bool",
+    "true": "bool",
+    "x": "TLObject",
+}
 
 WARNING = """
 # # # # # # # # # # # # # # # # # # # # # # # #
@@ -54,7 +66,7 @@ WARNING = """
 open = partial(open, encoding="utf-8")
 
 types_to_constructors = {}
-types_to_functions = {}
+types_to_functions = {"future_salt": "FutureSalt"}
 constructors_to_functions = {}
 namespaces_to_types = {}
 namespaces_to_constructors = {}
@@ -509,6 +521,24 @@ def start(format: bool = False):
         slots = ", ".join([f'"{i[0]}"' for i in sorted_args])
         return_arguments = ", ".join([f"{i[0]}={i[0]}" for i in sorted_args])
 
+        base_class = "TLObject"
+        if c.section == "functions":
+            if c.qualtype.lower() in PRIMITIVE_TYPES:
+                resp_type = PRIMITIVE_TYPES[c.qualtype.lower()]
+            elif c.qualtype == "FutureSalts":
+                resp_type = "raw.core.FutureSalts"
+            else:
+                if c.qualtype.lower().startswith("vector<"):
+                    inner_type = c.qualtype[7:-1]
+                    if inner_type.lower() in PRIMITIVE_TYPES:
+                        inner_type = PRIMITIVE_TYPES[inner_type.lower()]
+                    else:
+                        inner_type = f"raw.base.{inner_type}"
+                    resp_type = f"list[{inner_type}]"
+                else:
+                    resp_type = f"raw.base.{c.qualtype}"
+            base_class = f"TLRequest[{resp_type}]"
+
         compiled_combinator = combinator_tmpl.format(
             notice=notice,
             warning=WARNING,
@@ -521,7 +551,8 @@ def start(format: bool = False):
             fields=fields,
             read_types=read_types,
             write_types=write_types,
-            return_arguments=return_arguments
+            return_arguments=return_arguments,
+            base_class=base_class,
         )
 
         directory = "types" if c.section == "types" else c.section
@@ -559,7 +590,10 @@ def start(format: bool = False):
                 f.write(f"from .{snake(module)} import {t}\n")
 
             if not namespace:
-                f.write(f"from . import {', '.join(filter(bool, namespaces_to_types))}")
+                f.write(f"from . import {', '.join(filter(bool, namespaces_to_types))}\n")
+
+            # f.write("from ..core import FutureSalts\n")
+            # f.write("FutureSaltsInst = FutureSalts\n")
 
     for namespace, types in namespaces_to_constructors.items():
         with open(DESTINATION_PATH / "types" / namespace / "__init__.py", "w") as f:
