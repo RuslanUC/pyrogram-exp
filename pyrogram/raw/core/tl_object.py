@@ -82,7 +82,7 @@ class TLObject:
         pass
 
 
-TLObjectT = TypeVar("TLObjectT", bound=TLObject)
+TLObjectT = TypeVar("TLObjectT")
 
 
 class TLRequest(TLObject, Generic[TLObjectT]):
