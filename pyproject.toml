@@ -1,0 +1,54 @@
+[project]
+name = "Pyrogram"
+version = "2.0.106"
+description = "Elegant, modern and asynchronous Telegram MTProto API framework in Python for users and bots"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyaes (==1.6.1)",
+    "pysocks (==1.7.1)",
+]
+authors = [
+    { name = "Dan", email = "dan@pyrogram.org" },
+]
+license = { text = "LGPLv3" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Internet",
+    "Topic :: Communications",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+keywords = ["telegram", "chat", "messenger", "mtproto", "api", "client", "library", "python"]
+
+[project.urls]
+homepage = "https://github.com/pyrogram"
+repository = "https://github.com/pyrogram/pyrogram"
+"Tracker" = "https://github.com/pyrogram/pyrogram/issues"
+"Community" = "https://t.me/pyrogram"
+"Source" = "https://github.com/pyrogram/pyrogram"
+"Documentation" = "https://docs.pyrogram.org"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-cov>=7.1.0",
+    "twine>=6.2.0",
+]
