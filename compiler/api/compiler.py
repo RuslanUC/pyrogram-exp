@@ -322,45 +322,15 @@ def start(format: bool = False):
         os.makedirs(dir_path, exist_ok=True)
 
         constructors = sorted(types_to_constructors[qualtype])
-        constr_count = len(constructors)
-        items = "\n            ".join([f"{c}" for c in constructors])
-
-        type_docs = docs["type"].get(qualtype, None)
-
-        if type_docs:
-            type_docs = type_docs["desc"]
-        else:
-            type_docs = "Telegram API base type."
-
-        docstring = type_docs
-
-        docstring += f"\n\n    Constructors:\n" \
-                     f"        This base type has {constr_count} constructor{'s' if constr_count > 1 else ''} available.\n\n" \
-                     f"        .. currentmodule:: pyrogram.raw.types\n\n" \
-                     f"        .. autosummary::\n" \
-                     f"            :nosignatures:\n\n" \
-                     f"            {items}"
-
-        references, ref_count = get_references(qualtype, "types")
-
-        if references:
-            docstring += f"\n\n    Functions:\n        This object can be returned by " \
-                         f"{ref_count} function{'s' if ref_count > 1 else ''}.\n\n" \
-                         f"        .. currentmodule:: pyrogram.raw.functions\n\n" \
-                         f"        .. autosummary::\n" \
-                         f"            :nosignatures:\n\n" \
-                         f"            " + references
 
         with open(dir_path / f"{snake(module)}.py", "w") as f:
             f.write(
                 type_tmpl.format(
                     notice=notice,
                     warning=WARNING,
-                    docstring=docstring,
                     name=type,
-                    qualname=qualtype,
-                    types=", ".join([f"raw.types.{c}" for c in constructors]),
-                    doc_name=snake(type).replace("_", "-")
+                    types=" | ".join([f"raw.types.{c}" for c in constructors]),
+                    types_inst=", ".join([f"raw.types.{c}" for c in constructors]),
                 )
             )
 
