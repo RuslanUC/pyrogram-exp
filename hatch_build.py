@@ -12,12 +12,15 @@ class CustomBuildHook(BuildHookInterface):
         from compiler.api.compiler import start as compile_api
         from compiler.errors.compiler import start as compile_errors
 
+        source_dir = Path(self.root)
         dest_dir = Path(self.directory)
 
         print("Generating api schema...")
+        compile_api(source_dir / "pyrogram" / "raw")
         compile_api(dest_dir / "pyrogram" / "raw")
 
         print("Generating errors...")
+        compile_errors(source_dir / "pyrogram" / "errors" / "exceptions")
         compile_errors(dest_dir / "pyrogram" / "errors" / "exceptions")
 
         build_data["force_include"] = {
