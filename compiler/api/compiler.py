@@ -212,10 +212,10 @@ def get_references(t: str, kind: str):
 
 
 # noinspection PyShadowingBuiltins
-def start(format: bool = False):
-    shutil.rmtree(DESTINATION_PATH / "types", ignore_errors=True)
-    shutil.rmtree(DESTINATION_PATH / "functions", ignore_errors=True)
-    shutil.rmtree(DESTINATION_PATH / "base", ignore_errors=True)
+def start(dest_dir: Path = DESTINATION_PATH) -> None:
+    shutil.rmtree(dest_dir / "types", ignore_errors=True)
+    shutil.rmtree(dest_dir / "functions", ignore_errors=True)
+    shutil.rmtree(dest_dir / "base", ignore_errors=True)
 
     with open(HOME_PATH / "source/auth_key.tl") as f1, \
         open(HOME_PATH / "source/sys_msgs.tl") as f2, \
@@ -324,7 +324,7 @@ def start(format: bool = False):
 
     for qualtype in types_to_constructors:
         typespace, type = qualtype.split(".") if "." in qualtype else ("", qualtype)
-        dir_path = DESTINATION_PATH / "base" / typespace
+        dir_path = dest_dir / "base" / typespace
 
         module = type
 
@@ -557,7 +557,7 @@ def start(format: bool = False):
 
         directory = "types" if c.section == "types" else c.section
 
-        dir_path = DESTINATION_PATH / directory / c.namespace
+        dir_path = dest_dir / directory / c.namespace
 
         os.makedirs(dir_path, exist_ok=True)
 
@@ -577,7 +577,7 @@ def start(format: bool = False):
         d[c.namespace].append(c.name)
 
     for namespace, types in namespaces_to_types.items():
-        with open(DESTINATION_PATH / "base" / namespace / "__init__.py", "w") as f:
+        with open(dest_dir / "base" / namespace / "__init__.py", "w") as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
@@ -596,7 +596,7 @@ def start(format: bool = False):
             # f.write("FutureSaltsInst = FutureSalts\n")
 
     for namespace, types in namespaces_to_constructors.items():
-        with open(DESTINATION_PATH / "types" / namespace / "__init__.py", "w") as f:
+        with open(dest_dir / "types" / namespace / "__init__.py", "w") as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
@@ -612,7 +612,7 @@ def start(format: bool = False):
                 f.write(f"from . import {', '.join(filter(bool, namespaces_to_constructors))}\n")
 
     for namespace, types in namespaces_to_functions.items():
-        with open(DESTINATION_PATH / "functions" / namespace / "__init__.py", "w") as f:
+        with open(dest_dir / "functions" / namespace / "__init__.py", "w") as f:
             f.write(f"{notice}\n\n")
             f.write(f"{WARNING}\n\n")
 
@@ -627,7 +627,7 @@ def start(format: bool = False):
             if not namespace:
                 f.write(f"from . import {', '.join(filter(bool, namespaces_to_functions))}")
 
-    with open(DESTINATION_PATH / "all.py", "w", encoding="utf-8") as f:
+    with open(dest_dir / "all.py", "w", encoding="utf-8") as f:
         f.write(notice + "\n\n")
         f.write(WARNING + "\n\n")
         f.write(f"layer = {layer}\n\n")

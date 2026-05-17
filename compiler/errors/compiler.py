@@ -20,9 +20,10 @@ import csv
 import os
 import re
 import shutil
+from pathlib import Path
 
 HOME = "compiler/errors"
-DEST = "pyrogram/errors/exceptions"
+DEST = Path("pyrogram/errors/exceptions")
 NOTICE_PATH = "NOTICE"
 
 
@@ -37,11 +38,11 @@ def caml(s):
     return "".join([str(i.title()) for i in s])
 
 
-def start():
-    shutil.rmtree(DEST, ignore_errors=True)
-    os.makedirs(DEST)
+def start(dest_dir: Path = DEST) -> None:
+    shutil.rmtree(dest_dir, ignore_errors=True)
+    os.makedirs(dest_dir)
 
-    files = [i for i in os.listdir("{}/source".format(HOME))]
+    files = [i for i in os.listdir(f"{HOME}/source")]
 
     with open(NOTICE_PATH, encoding="utf-8") as f:
         notice = []
@@ -51,7 +52,7 @@ def start():
 
         notice = "\n".join(notice)
 
-    with open("{}/all.py".format(DEST), "w", encoding="utf-8") as f_all:
+    with open(f"{dest_dir}/all.py", "w", encoding="utf-8") as f_all:
         f_all.write(notice + "\n\n")
         f_all.write("count = {count}\n\n")
         f_all.write("exceptions = {\n")
@@ -63,7 +64,7 @@ def start():
 
             f_all.write("    {}: {{\n".format(code))
 
-            init = "{}/__init__.py".format(DEST)
+            init = f"{dest_dir}/__init__.py"
 
             if not os.path.exists(init):
                 with open(init, "w", encoding="utf-8") as f_init:
@@ -73,7 +74,7 @@ def start():
                 f_init.write("from .{}_{} import *\n".format(name.lower(), code))
 
             with open("{}/source/{}".format(HOME, i), encoding="utf-8") as f_csv, \
-                open("{}/{}_{}.py".format(DEST, name.lower(), code), "w", encoding="utf-8") as f_class:
+                open(f"{dest_dir}/{name.lower()}_{code}.py", "w", encoding="utf-8") as f_class:
                 reader = csv.reader(f_csv, delimiter="\t")
 
                 super_class = caml(name)
@@ -127,16 +128,16 @@ def start():
 
         f_all.write("}\n")
 
-    with open("{}/all.py".format(DEST), encoding="utf-8") as f:
+    with open(f"{dest_dir}/all.py", encoding="utf-8") as f:
         content = f.read()
 
-    with open("{}/all.py".format(DEST), "w", encoding="utf-8") as f:
+    with open(f"{dest_dir}/all.py", "w", encoding="utf-8") as f:
         f.write(re.sub("{count}", str(count), content))
 
 
 if "__main__" == __name__:
     HOME = "."
-    DEST = "../../pyrogram/errors/exceptions"
+    DEST = Path("../../pyrogram/errors/exceptions")
     NOTICE_PATH = "../../NOTICE"
 
     start()
