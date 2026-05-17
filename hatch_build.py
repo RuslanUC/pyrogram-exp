@@ -19,3 +19,8 @@ class CustomBuildHook(BuildHookInterface):
 
         print("Generating errors...")
         compile_errors(dest_dir / "pyrogram" / "errors" / "exceptions")
+
+        build_data["force_include"] = {
+            "pyrogram/raw": "pyrogram/raw",
+            "pyrogram/errors/exceptions": "pyrogram/errors/exceptions",
+        }
