@@ -23,6 +23,7 @@ class CustomBuildHook(BuildHookInterface):
         compile_errors(source_dir / "pyrogram" / "errors" / "exceptions")
         compile_errors(dest_dir / "pyrogram" / "errors" / "exceptions")
 
+        # TODO: dont
         build_data["force_include"] = {
             "pyrogram/raw": "pyrogram/raw",
             "pyrogram/errors/exceptions": "pyrogram/errors/exceptions",
